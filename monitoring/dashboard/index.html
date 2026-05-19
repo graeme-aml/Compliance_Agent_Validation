@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent Live Registry — Compliance Monitoring</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3e;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #6366f1;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .subtitle { color: var(--muted); font-size: 12px; }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 99px;
+      text-transform: uppercase;
+    }
+    .badge-live { background: #22c55e22; color: var(--green); border: 1px solid #22c55e44; }
+    main { padding: 24px 32px; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .stat-card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .stat-card .value.green { color: var(--green); }
+    .stat-card .value.yellow { color: var(--yellow); }
+    .stat-card .value.red { color: var(--red); }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    thead th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+      background: #13151f;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #1e2133; }
+    td { padding: 12px 16px; vertical-align: middle; }
+    .tier-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .tier-HIGH { background: #ef444420; color: #ef4444; border: 1px solid #ef444440; }
+    .tier-MEDIUM { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+    .tier-LOW { background: #22c55e20; color: #22c55e; border: 1px solid #22c55e40; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+    .status-APPROVED { background: #22c55e18; color: #22c55e; }
+    .status-CONDITIONAL { background: #f59e0b18; color: #f59e0b; }
+    .status-NEEDS_REMEDIATION { background: #ef444418; color: #ef4444; }
+    .status-PENDING_VALIDATION { background: #6366f118; color: #6366f1; }
+    .status-UNDER_REVIEW { background: #3b82f618; color: #3b82f6; }
+    .status-SUSPENDED { background: #64748b18; color: #64748b; }
+    .pass-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      min-width: 60px;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+    .bar-label { font-size: 12px; font-weight: 600; min-width: 38px; text-align: right; }
+    .alert-count { font-weight: 700; }
+    .alert-count.has-alerts { color: var(--red); }
+    .agent-name { font-family: monospace; font-size: 13px; color: var(--accent); }
+    .date { color: var(--muted); font-size: 12px; }
+    .overdue { color: var(--red); font-weight: 600; }
+    .owner { color: var(--muted); font-size: 12px; }
+    .last-updated {
+      text-align: right;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 12px;
+    }
+    .no-data { color: var(--muted); font-style: italic; font-size: 12px; }
+    .domain { font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>AI Agent Live Registry</h1>
+      <div class="subtitle">BSA/AML Compliance Monitoring · compliance.ai_agent_monitoring</div>
+    </div>
+    <span class="badge badge-live">● Live</span>
+  </header>
+  <main>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="label">Total Agents</div><div class="value" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="label">Approved</div><div class="value green" id="stat-approved">—</div></div>
+      <div class="stat-card"><div class="label">Need Action</div><div class="value yellow" id="stat-action">—</div></div>
+      <div class="stat-card"><div class="label">Open Alerts</div><div class="value red" id="stat-alerts">—</div></div>
+    </div>
+    <div class="section-title">Agent Registry</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>Domain</th>
+          <th>Tier</th>
+          <th>Status</th>
+          <th>Pass Rate (30d)</th>
+          <th>Override Rate (30d)</th>
+          <th>Open Alerts</th>
+          <th>Last Validated</th>
+          <th>Next Due</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody id="agent-table-body">
+        <tr><td colspan="10" class="no-data" style="padding:24px;text-align:center">Loading…</td></tr>
+      </tbody>
+    </table>
+    <div class="last-updated" id="last-updated"></div>
+  </main>
+
+  <script>
+    // ---------------------------------------------------------------------------
+    // Data layer — swap MOCK_DATA for the live Snowflake API call below
+    // ---------------------------------------------------------------------------
+
+    const MOCK_DATA = [
+      {
+        agent_name: "osint-kyc-kyb-search",
+        domain: "OSINT_INVESTIGATION",
+        risk_tier: "MEDIUM",
+        status: "PENDING_VALIDATION",
+        current_version: null,
+        model_id: null,
+        live_pass_rate: null,
+        failing_checks: 0,
+        override_rate_30d: null,
+        feedback_count_30d: 0,
+        open_alert_count: 0,
+        last_validated_at: null,
+        next_validation_due: "Before production",
+        owner: "Compliance Testing",
+      }
+    ];
+
+    // To connect to live data, replace the fetchAgents function with:
+    // async function fetchAgents() {
+    //   const result = await callMcpTool("snowflake_query", {
+    //     sql: "SELECT * FROM compliance.ai_agent_monitoring.vw_live_agent_registry ORDER BY risk_tier, agent_name"
+    //   });
+    //   return result.rows;
+    // }
+
+    async function fetchAgents() {
+      // Simulate a short async load; replace with real fetch in production
+      await new Promise(r => setTimeout(r, 300));
+      return MOCK_DATA;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rendering
+    // ---------------------------------------------------------------------------
+
+    function barColor(rate) {
+      if (rate >= 0.95) return "#22c55e";
+      if (rate >= 0.80) return "#f59e0b";
+      return "#ef4444";
+    }
+
+    function passRateCell(rate) {
+      if (rate === null || rate === undefined) return '<span class="no-data">Awaiting data</span>';
+      const pct = Math.round(rate * 100);
+      const color = barColor(rate);
+      return `
+        <div class="pass-bar">
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span class="bar-label" style="color:${color}">${pct}%</span>
+        </div>`;
+    }
+
+    function overrideRateCell(rate, count) {
+      if (rate === null || rate === undefined) return '<span class="no-data">—</span>';
+      const pct = (rate * 100).toFixed(1);
+      const color = rate > 0.2 ? "#ef4444" : rate > 0.1 ? "#f59e0b" : "#22c55e";
+      return `<span style="color:${color};font-weight:600">${pct}%</span> <span class="owner">(${count} reviews)</span>`;
+    }
+
+    function isOverdue(dueDateStr) {
+      if (!dueDateStr || dueDateStr === "Before production") return false;
+      return new Date(dueDateStr) < new Date();
+    }
+
+    function dueDateCell(due) {
+      if (!due) return '<span class="no-data">—</span>';
+      if (due === "Before production") return `<span style="color:#6366f1;font-size:12px">Before production</span>`;
+      const overdue = isOverdue(due);
+      return `<span class="${overdue ? 'overdue' : 'date'}">${due}${overdue ? ' ⚠' : ''}</span>`;
+    }
+
+    function renderRow(agent) {
+      const alertClass = agent.open_alert_count > 0 ? "has-alerts" : "";
+      return `
+        <tr>
+          <td><span class="agent-name">${agent.agent_name}</span></td>
+          <td><span class="domain">${agent.domain.replace(/_/g, ' ')}</span></td>
+          <td><span class="tier-badge tier-${agent.risk_tier}">${agent.risk_tier}</span></td>
+          <td><span class="status-badge status-${agent.status}">${agent.status.replace(/_/g, ' ')}</span></td>
+          <td>${passRateCell(agent.live_pass_rate)}</td>
+          <td>${overrideRateCell(agent.override_rate_30d, agent.feedback_count_30d)}</td>
+          <td><span class="alert-count ${alertClass}">${agent.open_alert_count}</span></td>
+          <td><span class="date">${agent.last_validated_at ? agent.last_validated_at.split('T')[0] : '—'}</span></td>
+          <td>${dueDateCell(agent.next_validation_due)}</td>
+          <td><span class="owner">${agent.owner || '—'}</span></td>
+        </tr>`;
+    }
+
+    function updateStats(agents) {
+      document.getElementById("stat-total").textContent = agents.length;
+      document.getElementById("stat-approved").textContent =
+        agents.filter(a => a.status === "APPROVED").length;
+      document.getElementById("stat-action").textContent =
+        agents.filter(a => ["CONDITIONAL","NEEDS_REMEDIATION","UNDER_REVIEW","SUSPENDED"].includes(a.status)).length;
+      document.getElementById("stat-alerts").textContent =
+        agents.reduce((s, a) => s + (a.open_alert_count || 0), 0);
+    }
+
+    async function refresh() {
+      const agents = await fetchAgents();
+      document.getElementById("agent-table-body").innerHTML =
+        agents.length ? agents.map(renderRow).join("") :
+        '<tr><td colspan="10" class="no-data" style="padding:24px;text-align:center">No agents registered.</td></tr>';
+      updateStats(agents);
+      document.getElementById("last-updated").textContent =
+        `Last updated: ${new Date().toLocaleString('en-US', { timeZoneName: 'short' })}`;
+    }
+
+    refresh();
+    setInterval(refresh, 60_000); // refresh every 60s
+  </script>
+</body>
+</html>

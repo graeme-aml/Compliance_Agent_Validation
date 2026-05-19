@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: compliance-agent-validation
+Version: 0.1.0
+Summary: Continuous validation framework for BSA/AML compliance AI agents
+Requires-Python: >=3.11
+Requires-Dist: anthropic>=0.40.0
+Requires-Dist: pydantic>=2.0
+Requires-Dist: apscheduler>=3.10
+Requires-Dist: rich>=13.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: click>=8.0
