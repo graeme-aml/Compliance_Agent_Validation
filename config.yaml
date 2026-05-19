@@ -1,0 +1,15 @@
+anthropic:
+  model: claude-sonnet-4-6
+  max_tokens: 4096
+
+evidence:
+  base_path: evidence
+  retention_years: 5
+
+scheduler:
+  high_tier_check_interval_hours: 24
+  medium_tier_check_interval_hours: 168
+  low_tier_check_interval_hours: 720
+
+logging:
+  level: INFO
